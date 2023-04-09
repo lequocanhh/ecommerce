@@ -2,6 +2,7 @@ import { configureStore, createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
     isCartOpen: false,
+    isSearchOpen: false,
     cart: [],
     items: []
 }
@@ -42,6 +43,10 @@ export const cartSlice = createSlice({
 
         setIsCartOpen: (state) => {
             state.isCartOpen = !state.isCartOpen
+        },
+
+        SetIsSearchOpen: (state) => {
+            state.isSearchOpen = !state.isSearchOpen
         }
     }
 })
@@ -52,6 +57,6 @@ const store = configureStore({
     }
 })
 
-export const { setItem, addToCart, removeFromCart, increaseCount, decreaseCount, setIsCartOpen } = cartSlice.actions
+export const { setItem, addToCart, removeFromCart, increaseCount, decreaseCount, setIsCartOpen, SetIsSearchOpen } = cartSlice.actions
 
 export default store

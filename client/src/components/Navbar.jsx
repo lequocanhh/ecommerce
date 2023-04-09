@@ -1,46 +1,63 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   PersonOutline,
   ShoppingBagOutlined,
   MenuOutlined,
   SearchOutlined,
+  CloseOutlined,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { shades } from "../theme";
-import { Badge, Box, IconButton, Input } from "@mui/material";
-import { setIsCartOpen, setItem } from "../store";
+import {
+  Avatar,
+  Badge,
+  Box,
+  IconButton,
+  Input,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  useMediaQuery,
+} from "@mui/material";
+import { setIsCartOpen, setItem, SetIsSearchOpen } from "../store";
+import useDebounce from "../hooks/useDebounce";
+import SearchList from "./SearchList";
 
 const Navbar = () => {
-  const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState("");
-  const [showSearch, setShowSearch] = useState(false);
+  const [listSearchItem, setListSearchItem] = useState([]);
+  const debounce = useDebounce(searchValue, 500);
+
+  const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const cart = useSelector((state) => state.cart.cart);
   const items = useSelector((state) => state.cart.items);
-  const getItems = async () => {
-    const items = await fetch(
-      "http://localhost:1337/api/items?populate=image",
-      {
-        method: "GET",
-      }
-    );
-    const itemJson = await items.json();
-    dispatch(setItem(itemJson.data));
-  };
+  const isSearchOpen = useSelector((state) => state.cart.isSearchOpen);
+
+  const isNonMobile = useMediaQuery("(min-width:1000px)");
+
   const handleSearch = () => {
-    setShowSearch(true);
     const searchItem = items.filter((item) => {
       return item.attributes.name
         .toLowerCase()
-        .includes(searchValue.toLowerCase());
+        .includes(debounce.toLowerCase());
     });
-    if (searchValue !== "") {
-      dispatch(setItem(searchItem));
-    } else {
-      getItems();
+    if (debounce !== "") {
+      setListSearchItem(searchItem);
     }
   };
+
+  useEffect(() => {
+    handleSearch();
+  }, [debounce]);
+
+  const handleShowSearch = () => {
+    dispatch(SetIsSearchOpen({}));
+  };
+
   return (
     <Box
       display="flex"
@@ -74,11 +91,12 @@ const Navbar = () => {
           columnGap="20px"
           zIndex="2"
         >
-          <IconButton sx={{ color: "black" }} onClick={handleSearch}>
-            <SearchOutlined />
+          <IconButton sx={{ color: "black" }} onClick={handleShowSearch}>
+            {!isSearchOpen ? <SearchOutlined /> : <CloseOutlined />}
           </IconButton>
-          {showSearch && (
-            <Box onBlur={() => setShowSearch(false)}>
+
+          {isSearchOpen && (
+            <Box>
               <Box>
                 <Input
                   value={searchValue}
@@ -86,6 +104,21 @@ const Navbar = () => {
                   placeholder="Search..."
                 />
               </Box>
+              <List
+                sx={{
+                  position: "absolute",
+                  top: "100%",
+                  // width: "25vw",
+                  width: isNonMobile ? "30vw" : "50vw",
+                  right: "10%",
+                  maxHeight: "35vh",
+                  overflowX: "auto",
+                }}
+              >
+                {listSearchItem.map(({ id, attributes }) => (
+                  <SearchList key={id} id={id} item={attributes} />
+                ))}
+              </List>
             </Box>
           )}
 
